@@ -89,4 +89,35 @@
             android:text="立体声"
             android:onClick="stereo"/>
     </LinearLayout>
+
+
+    
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <Button
+            android:onClick="startAudioRecord"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="开始录音"/>
+        <Button
+            android:onClick="stopAudioRecord"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="暂停录音"/>
+        <Button
+            android:onClick="playAudioRecord"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="播放录音"/>
+        <Button
+            android:onClick="stopPlayAudioRecord"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:text="停止播放"/>
+    </LinearLayout>
 </LinearLayout>
