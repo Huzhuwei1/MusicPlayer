@@ -14,6 +14,7 @@ add_library( # Sets the name of the library.
              src/main/cpp/AudioQueue.cpp
              src/main/cpp/AudioDecoder.cpp
              src/main/cpp/AudioPlayerController.cpp
+             src/main/cpp/AudioRecorder.cpp
 
              src/main/cpp/soundtouch/SoundTouch/AAFilter.cpp
              src/main/cpp/soundtouch/SoundTouch/FIFOSampleBuffer.cpp
