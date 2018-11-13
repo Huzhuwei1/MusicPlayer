@@ -42,6 +42,8 @@ public: const char *url = NULL;
         pthread_mutex_t seek_mutex;
         bool exit = false;
         int samples = 0;
+        bool isRecordPcm = false;
+        bool readFrameFinished = false;
 
         //OpenSLES
         SLObjectItf engineObject = NULL;
@@ -55,6 +57,7 @@ public: const char *url = NULL;
         SLAndroidSimpleBufferQueueItf bqPlayerBufferQueue;
         // aux effect on the output mix, used by the buffer queue player
         const SLEnvironmentalReverbSettings reverbSettings = SL_I3DL2_ENVIRONMENT_PRESET_STONECORRIDOR;
+
 
         //SoundTouch
         SoundTouch* soundTouch = NULL;
@@ -84,6 +87,7 @@ public:AudioDecoder(javaCallback* _callback, HPlayStatus *_playStatus, const cha
        void setTempo(float tempo);
        void setPitch(float pitch);
        int getVolumeLp(char *data, size_t data_size);
+       void startStopRecord(bool isStart);
 };
 
 

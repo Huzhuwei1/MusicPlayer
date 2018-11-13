@@ -3,7 +3,7 @@
 //
 
 #include "AudioDecoder.h"
-
+static pthread_mutex_t  audioEngineLock = PTHREAD_MUTEX_INITIALIZER;
 
 AudioDecoder::AudioDecoder(javaCallback *_callback, HPlayStatus *_playStatus, const char *url) {
     this->callback = _callback;
@@ -31,6 +31,7 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context) {
                 decoder->actual_time = decoder->last_time = decoder->total_time;
                 decoder->callback->onPlaying(THREAD_TYPE_CHILD, (int) decoder->actual_time, decoder->total_time);
             }
+            pthread_mutex_unlock(&audioEngineLock);
             return;
         }
         int sample_rate = 0;
@@ -42,10 +43,16 @@ void bqPlayerCallback(SLAndroidSimpleBufferQueueItf bq, void* context) {
             decoder->last_time = decoder->actual_time;
             decoder->callback->onPlaying(THREAD_TYPE_CHILD, (int) decoder->actual_time, decoder->total_time);
         }
+        if(decoder->isRecordPcm) {
+            decoder->callback->onCallPcmToAAC(THREAD_TYPE_CHILD, data_size * 2 * 2, decoder->soundtouch_buffer);
+        }
 
         LOGD("Current Volume Lp: %d",decoder->getVolumeLp((char *)decoder->soundtouch_buffer,data_size * 4));
 //       enqueue another buffer
-        (*bq)->Enqueue(bq, (char *)decoder->soundtouch_buffer, (SLuint32) data_size *2 *2);
+        SLresult result = (*bq)->Enqueue(bq, (char *)decoder->soundtouch_buffer, (SLuint32) data_size *2 *2);
+        if (SL_RESULT_SUCCESS != result) {
+            pthread_mutex_unlock(&audioEngineLock);
+        }
     }
 }
 
@@ -62,6 +69,7 @@ void AudioDecoder::prepare() {
     //注册解码器
     av_register_all();
     avformat_network_init();
+    
 
     //打开文件
     pFormatCtx = avformat_alloc_context();
@@ -147,17 +155,21 @@ void AudioDecoder::start() {
                     continue;
                 }
 
-                AVFrame *avFrame = av_frame_alloc();
-                ret = avcodec_receive_frame(pCodeCtx, avFrame);
-                if(ret != 0) {
-                    LOGE("Error avcodec_receive_frame fail");
-                    av_frame_free(&avFrame);
-                    av_free(avFrame);
-                    avFrame = NULL;
+                while (1) {
+                    AVFrame *avFrame = av_frame_alloc();
+                    ret = avcodec_receive_frame(pCodeCtx, avFrame);
+                    if(ret != 0) {
+                        LOGE("Error avcodec_receive_frame fail");
+                        av_frame_free(&avFrame);
+                        av_free(avFrame);
+                        avFrame = NULL;
+                        break;
+                    }
+                    audioQueue->putAVFrame(avFrame);
+                    LOGD("解码到第%d帧",count);
                     continue;
                 }
-                audioQueue->putAVFrame(avFrame);
-                LOGD("解码到第%d帧",count);
+
             }
         } else {
             //flush decoder
@@ -253,7 +265,7 @@ void AudioDecoder::initOpenSLES() {
     SLDataLocator_OutputMix loc_outmix = {SL_DATALOCATOR_OUTPUTMIX,outputMixObject};
     SLDataSink audioSnk = {&loc_outmix,NULL};
 
-    const SLInterfaceID ids1[4] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME,SL_IID_EFFECTSEND,SL_IID_MUTESOLO};
+    const SLInterfaceID ids1[4] = {SL_IID_BUFFERQUEUE,SL_IID_VOLUME,SL_IID_PLAYBACKRATE,SL_IID_MUTESOLO};
     const SLboolean  req1[4] = {SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE,SL_BOOLEAN_TRUE};
     (*engineEngine)->CreateAudioPlayer(engineEngine,&bqPlayerObject,&audioSrc,&audioSnk,
                                        4,ids1,req1);
@@ -427,7 +439,7 @@ void AudioDecoder::stop() {
 
 void AudioDecoder::release() {
     LOGE("内存开始释放了");
-    if(!playStatus->exit) {
+    if(playStatus != NULL && playStatus->exit) {
         //中止解码，并释放
         playStatus->exit = true;
 
@@ -453,6 +465,8 @@ void AudioDecoder::release() {
         bqPlayerObject = NULL;
         bqPlayerPlay = NULL;
         bqPlayerBufferQueue = NULL;
+        bqPlayerMuteSolo = NULL;
+        bqPlayerVolume = NULL;
     }
     if (outputMixObject != NULL) {
         (*outputMixObject)->Destroy(outputMixObject);
@@ -464,9 +478,21 @@ void AudioDecoder::release() {
         engineObject = NULL;
         engineEngine = NULL;
     }
-    if(out_buffer != NULL) {
+    pthread_mutex_destroy(&audioEngineLock);
+    if (out_buffer != NULL) {
         free(out_buffer);
         out_buffer = NULL;
+    }
+    if (buffer != NULL) {
+        buffer = NULL;
+    }
+    if (soundTouch != NULL) {
+        delete soundTouch;
+        soundTouch = NULL;
+    }
+    if (soundtouch_buffer != NULL) {
+        free(soundtouch_buffer);
+        soundtouch_buffer = NULL;
     }
     if (pCodeCtx != NULL) {
         avcodec_close(pCodeCtx);
@@ -587,6 +613,10 @@ int AudioDecoder::getVolumeLp(char *data, size_t data_size) {
         lp = (int) (20.0 * log10(avg));
     }
     return lp;
+}
+
+void AudioDecoder::startStopRecord(bool isStart) {
+    isRecordPcm = isStart;
 }
 
 

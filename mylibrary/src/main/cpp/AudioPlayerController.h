@@ -33,6 +33,8 @@ public:AudioPlayerController(javaCallback* _callback, HPlayStatus *_playStatus);
        void setSoundChannel(int channel_id);
        void setTempo(float tempo);
        void setPitch(float pitch);
+       int getSampleRate();
+       void startStopRecord(bool isStart);
 };
 
 

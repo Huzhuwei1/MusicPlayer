@@ -2,12 +2,15 @@
 #include "AudioPlayerController.h"
 #include "javaCallback.h"
 #include "HPlayStatus.h"
+#include "AudioRecorder.h"
 
 JavaVM *jvm;
 
 javaCallback *callback;
 
 AudioPlayerController *controller;
+
+AudioRecorder *recorder;
 
 HPlayStatus *playStatus;
 
@@ -114,6 +117,60 @@ Java_com_hzw_mylibrary_Player_nativeSetPitch(JNIEnv *env, jobject instance, jflo
     // TODO
     if (controller != NULL) {
         controller->setPitch(percent);
+    }
+
+}extern "C"
+JNIEXPORT jint JNICALL
+Java_com_hzw_mylibrary_Player_nativeGetSamplerate(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if (controller != NULL) {
+        return controller->getSampleRate();
+    }
+    return 0;
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzw_mylibrary_Player_n_1startstoprecord(JNIEnv *env, jobject instance, jboolean isStart) {
+
+    // TODO
+    if (controller != NULL) {
+        controller->startStopRecord(isStart);
+    }
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzw_mylibrary_Player_nativeCreateRecorderEngine(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if (recorder == NULL) {
+        recorder = new AudioRecorder();
+    }
+    recorder->createEngine();
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzw_mylibrary_Player_nativeCreateAudioRecorder(JNIEnv *env, jobject instance, jstring url_) {
+    const char *url = env->GetStringUTFChars(url_, 0);
+    // TODO
+    if (recorder != NULL) {
+        recorder->createAudioRecord(url);
+    }
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzw_mylibrary_Player_nativeStopRecord(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if (recorder != NULL) {
+        recorder->stop();
+    }
+
+}extern "C"
+JNIEXPORT void JNICALL
+Java_com_hzw_mylibrary_Player_nativeReleaseRecorder(JNIEnv *env, jobject instance) {
+
+    // TODO
+    if (recorder != NULL) {
+        recorder->shutdown();
     }
 
 }

@@ -118,3 +118,18 @@ void AudioPlayerController::setPitch(float pitch) {
     }
 }
 
+int AudioPlayerController::getSampleRate() {
+
+    if (audioDecoder != NULL && audioDecoder->pCodecParam != NULL) {
+        return audioDecoder->pCodecParam->sample_rate;
+    }
+    return 0;
+}
+
+void AudioPlayerController::startStopRecord(bool isStart) {
+
+    if (audioDecoder != NULL) {
+        audioDecoder->startStopRecord(isStart);
+    }
+}
+

@@ -20,6 +20,7 @@ public:JNIEnv *env;
        jmethodID jmethodID_playing;
        jmethodID jmethodID_error;
        jmethodID jmethodID_complete;
+       jmethodID jmethodID_pcmtoaac;
 
 public:javaCallback(JavaVM *javaVM, JNIEnv *jniEnv, jobject jobject);
        ~javaCallback();
@@ -27,6 +28,7 @@ public:javaCallback(JavaVM *javaVM, JNIEnv *jniEnv, jobject jobject);
        void onPlaying(int type, int current_time, int total_time);
        void onError(int type);
        void onComplete(int type);
+       void onCallPcmToAAC(int type,int size,void *buffer);
 };
 
 #endif //MUSICPLAYER_JAVACALLBACK_H
