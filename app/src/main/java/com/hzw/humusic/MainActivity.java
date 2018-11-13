@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.hzw.mylibrary.Player;
 
+import java.io.File;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainActivity extends AppCompatActivity {
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
         mTvPitch = findViewById(R.id.tv_pitch);
         mTvTempo = findViewById(R.id.tv_tempo);
         player = new Player();
+        player.nativeCreateRecorderEngine();
         player.setListener(new Player.MyPlayerListener() {
             @Override
             public void onPrepared() {
@@ -193,4 +195,29 @@ public class MainActivity extends AppCompatActivity {
 
         player.setSoundChannel(Player.SoundChannel.CHANNEL_STEREO);
     }
+
+
+
+    public void startAudioRecord(View view) {
+        player.nativeCreateAudioRecorder("/storage/emulated/0/huAudioRecord.pcm");
+    }
+
+    public void stopAudioRecord(View view) {
+        player.nativeStopRecord();
+    }
+
+    public void playAudioRecord(View view) {
+        player.PlayPcm("/storage/emulated/0/humusic.pcm");
+    }
+
+    public void stopPlayAudioRecord(View view) {
+        player.stopPlayPcm();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        player.nativeReleaseRecorder();
+    }
+
 }
